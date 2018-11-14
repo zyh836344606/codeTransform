@@ -1,0 +1,145 @@
+( -- 创建数据库
+CREATE DATABASE 数据库名
+ON  PRIMARY 
+( NAME = 逻辑文件名，
+FILENAME =' 磁盘文件名.mdf'
+[, SIZE = 初始大小 ]
+[, MAXSIZE = 最大容量|unlimited ]
+[, FILEGROWTH = 增长量 ] ) 
+
+FILEGROUP 逻辑文件名
+( NAME = 逻辑文件名，
+FILENAME =' 磁盘文件名.ndf'
+[, SIZE = 初始大小 ]
+[, MAXSIZE = 最大容量|unlimited ]
+[, FILEGROWTH = 增长量 ] ) 
+
+LOG ON
+( NAME = 逻辑文件名，
+FILENAME = ' 磁盘文件名.ldf '
+[,SIZE = 初始大小 ]
+[,MAXSIZE = 最大容量|unlimited ]
+[,FILEGROWTH = 增长量 ] )
+
+
+)
+( -- 管理数据库
+--显示或查询数据库
+sp_helpdb [数据库名]
+--新增文件组
+alter database 数据库名
+add filegroup 文件
+--重命名文件组
+alter database 数据库名
+modify filegroup 文件组名
+name=新文件组名
+	--修改数据文件和日志文件的属性
+	alter database 数据库名
+	modify file
+	( NAME = 逻辑文件名，
+	[, SIZE = 初始大小 ]
+	[, MAXSIZE = 最大容量|unlimited ]
+	[, FILEGROWTH = 增长量 ] ) 
+--删除文件组
+alter database 数据库名
+Remove file  文件名
+remove filegroup 文件组名
+--删除数据库
+drop database 数据库名
+)
+( -- 创建表和约束
+create  database  数据库名 
+go   --表示一个批的结束。go 只能独自占用一行
+use    数据库名  --从默认的master数据库切换到xscj库
+create   table   表名
+ ( 列名   int  identity,  							--identity<种子值,增量> 
+   列名   char (3)   not   null   primary  key ,    --不能为空 主键
+   列名   tinyint  default  1   check ( 约束条件),  --默认为1 切被check约束
+   列名   char (3)   not   null unique  ,  			--唯一性约束
+constraint   自定义约束名(约束类型_库名_表名)  约束条件 (列名),   
+constraint   自定义约束名(约束类型_库名_表名) foreign key references 外键 (列名) On Update Cascade  On Delete No Action,   --外键  
+	--指定Cascade，则在修改/删除父表中数据行时，会自动修改子表中相应数据记录；若指定No Action，则SQL Server会产生一个错误，修改/删除操作失败
+)
+	--新添约束
+		Alter table 表名
+		add constraint 自定义约束名 约束类型 (列名)
+		--特殊新添
+		自定义约束名 default 默认值 for (表名)
+		自定义约束名(约束类型_库名_表名) foreign key references 外键 (列名) On Update Cascade  On Delete No Action
+	--修改列
+		alter table 表名
+		alter column 列名 新类型
+	--删除列
+		alter table 表名  --若列上有约束，所以应先删除该约束后，再删除该列。 
+		drop constraint 约束名
+		drop column 列名  
+	--删除数据表
+		drop table 表名  --有外键约束则先删外键
+	
+)
+( -- 插入数据
+insert into 表名(列名,列名,列名...) values(数据1,数据2,数据3...);
+insert into 表名 values(数据1,数据2,数据3...);
+	--插入多行数据
+	insert 表名 (列名 [,…n])
+	select 列名 [,…n] from 表名
+	[where 条件]
+)
+( -- 数据操作
+--修改数据行
+update 表名
+set 列名 = 表达式
+[where 条件] 	
+--删除数据行
+delete 表名
+[where 条件]
+--获取时间
+getDate()
+)
+( -- select语句基本格式
+ --语句基本格式
+	SELECT [ALL |DISTINCT(默认) ][TOP n[PERCENT]] <选择列表> --ALL默认
+	[INTO new-table] /*指定结果存入新表*/ 
+	[FROM] {<表资源>} [,…n] /*指定表或视图*/
+	[WHERE] <搜索条件> /*指定查询条件*/
+	[GROUP BY] {<分组表达式>}[,…n] /*指定分组表达式*/
+	[HAVING] <搜索条件> /*指定分组统计条件*/
+	[ORDER BY] {<字段名 [ASC | DESC]>} [,…n]/*指定排序表达式和顺序*/ --asc默认
+--条件查询
+	比较条件： > >= < <= = <> != !> !<
+	逻辑条件：and 、 or、 not
+	范围条件：between…and、 not between…and
+	模糊匹配条件：like 、 not like
+	列表运算条件：in 、 not in
+	空值判断条件：is null 、 is not null
+--模糊查询(用like)连接
+	%		代表0至多个任意字符
+	_		下划线下划线，代表1个任意字符
+	[ ] 	代表指定范围内的字符
+	[^] 	代表不在指定范围内的字符
+)
+( -- 数据汇总查询
+--聚合函数
+	AVG函数： avg ( [ all | distinct ] 列名)  --只能用于数值类型数据
+	SUM函数： sum ( [ all | distinct ] 列名)  --只能用于数值类型数据
+	MAX函数： max ( [ all | distinct ] 列名) 
+	MIN函数： min ( [ all | distinct ] 列名)
+	Count函数：count ( * | [ all | distinct ] 列名)
+	All ：计算该列值非空的记录的个数，默认为all。
+	Distinct：计算该列值非空且不同的记录的个数(不计算重复行)。
+	* ：计算所有记录的个数。
+--GROUP BY 语句
+	SELECT 列名, 聚合函数(列名)
+	FROM 表名
+	WHERE 搜索条件
+	GROUP BY 列名
+--语法格式再叙
+select						--投影运算
+from 表名[，……n]			--连接运算
+[ where 条件 ]				--选择运算
+[ group by 列名 ]				--分类汇总
+[ having 逻辑表达式 ]			--分类汇总
+[ order by 列名 ]	--排序		--分类汇总
+)
+
+
